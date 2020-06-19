@@ -20,13 +20,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "Lcd.h"
-#include "Sys.h"
+
 
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include "Lcd.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -79,7 +79,12 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-		
+int temp;
+uint32_t adc_buf;
+char Raw_Temp[8];
+uint16_t Mem_Add[8]={0x00,0x01,0x02,0x03,0x04,0x05,0x06};
+uint8_t Mem_Write_data[8]={0x00,0x48};
+float Tem=0,fahrenheit=0,celsius=0;
 /* USER CODE END 0 */
 
 /**
@@ -98,7 +103,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  int Adc1_Data=0,temp1=0;
+	char Temp_Value[2];
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -119,16 +125,52 @@ int main(void)
   MX_RTC_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
- Sys_Init();
+	RM_LCD_Init();
+	RM_LCD_Goto(3,0);
+	RM_LCD_PutStr("WELCOME TO  ");
+	RM_LCD_Goto(1,1);
+	RM_LCD_PutStr("KERNEL MASTERS");
+	HAL_Delay(1000);
+	RM_LCD_Clear();
+	Raw_Temp[6]='\0';
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		//Read word format (SA=0x5A, read RAM=0x07, result=0x3AD2, PEC=0x30)
+		HAL_I2C_Mem_Read(&hi2c1,(0x5A<<1),0x07,1, (uint8_t *)&Raw_Temp[0],3,1000);
+		Tem=(Raw_Temp[1]<<8)|(Raw_Temp[0]);
+		Tem=Tem*(0.02);
+		celsius=Tem-(273.15);      //celsius
+		fahrenheit=(celsius*9/5)+32;   //fahrenheit
+		sprintf(Temp_Value, "%f",celsius);
+		RM_LCD_Goto(0,0);
+		RM_LCD_PutStr(Temp_Value);
+		RM_LCD_Write_Str(7,0,"  ");
+		RM_LCD_Write_CMD(0x85);
+		RM_LCD_Put_Char(0xDF);
+		RM_LCD_Put_Char('C');
+		sprintf(Temp_Value, "%f",fahrenheit);
 		
-		Sys_Loop();
-    /* USER CODE END WHILE */
+		RM_LCD_Write_CMD(0x89);
+		RM_LCD_PutStr(Temp_Value);
+		RM_LCD_Write_CMD(0x8E);
+		RM_LCD_Put_Char(0xDF);
+		RM_LCD_Put_Char('F');
+		if(celsius>37.5)
+		{
+				RM_LCD_Write_Str(0,1,"More then body TE");
+				HAL_GPIO_WritePin(GPIOB,Buzzer_Pin , GPIO_PIN_SET);
+		}
+		else
+		{
+				HAL_GPIO_WritePin(GPIOB,Buzzer_Pin , GPIO_PIN_RESET);
+				RM_LCD_Write_Str(0,1,"normal body temperature");
+		}
+		HAL_Delay(1000);
+		/* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
