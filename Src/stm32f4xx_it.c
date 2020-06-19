@@ -27,7 +27,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-
+	extern volatile uint8_t Flag_Usr_SW1,Flag_Usr_SW2,Flag_Usr_SW3;
+	extern volatile uint8_t Rx_Flag;
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -56,6 +57,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart6;
@@ -251,7 +253,9 @@ void USART1_IRQHandler(void)
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
-
+	unsigned char Temp =  (uint8_t)(huart1.Instance->DR & (uint8_t)0x00FF);
+	if(Temp == 0x41)
+		Rx_Flag=1;
   /* USER CODE END USART1_IRQn 1 */
 }
 
@@ -265,8 +269,24 @@ void USART2_IRQHandler(void)
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
-
+	unsigned char Temp =  (uint8_t)(huart2.Instance->DR & (uint8_t)0x00FF);
+	if(Temp == 0x42)
+		Rx_Flag=1;
   /* USER CODE END USART2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USB On The Go FS global interrupt.
+  */
+void OTG_FS_IRQHandler(void)
+{
+  /* USER CODE BEGIN OTG_FS_IRQn 0 */
+
+  /* USER CODE END OTG_FS_IRQn 0 */
+  HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
+  /* USER CODE BEGIN OTG_FS_IRQn 1 */
+
+  /* USER CODE END OTG_FS_IRQn 1 */
 }
 
 /**
@@ -279,7 +299,9 @@ void USART6_IRQHandler(void)
   /* USER CODE END USART6_IRQn 0 */
   HAL_UART_IRQHandler(&huart6);
   /* USER CODE BEGIN USART6_IRQn 1 */
-
+	unsigned char Temp =  (uint8_t)(huart6.Instance->DR & (uint8_t)0x00FF);
+	if(Temp == 0x43)
+		Rx_Flag=1;
   /* USER CODE END USART6_IRQn 1 */
 }
 
